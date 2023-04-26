@@ -1,0 +1,8 @@
+**/*.pth
+**/*.pt
+**/__pycache__
+**/coco/
+*.onnx
+.DS_Store
+runs
+*/model_checkpoints/
