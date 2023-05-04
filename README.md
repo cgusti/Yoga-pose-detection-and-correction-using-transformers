@@ -1,7 +1,3 @@
-# ViTPose (simple version w/o mmcv)
-An unofficial implementation of `ViTPose` [Y. Xu et al., 2022] <br>
-![result_image](./examples/img1_result.jpg "Result Image")
-
 ## Usage
 ### | **Inference**
 ```
