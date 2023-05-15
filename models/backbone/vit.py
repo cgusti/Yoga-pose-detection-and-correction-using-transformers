@@ -13,11 +13,11 @@ import torch.utils.checkpoint as checkpoint
 from torch import Tensor
 
 # from timm.models.layers import drop_path, to_2tuple, trunc_normal_
-
 # from .base_backbone import BaseBackbone
 
 def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: bool = True):
     """Drop paths (Stochastic Depth) per sample (when applied in main path of residual blocks).
+    Randomly sets elements of the input tensor 'x' to zero based on the drop probability 'drop_prob'.
 
     This is the same as the DropConnect impl I created for EfficientNet, etc networks, however,
     the original name is misleading as 'Drop Connect' is a different form of dropout in a separate paper...
@@ -36,13 +36,14 @@ def drop_path(x, drop_prob: float = 0., training: bool = False, scale_by_keep: b
     return x * random_tensor
 
 def _ntuple(n):
+    """Helper function that returns a parsing function for an n-tuple"""
     def parse(x):
         if isinstance(x, collections.abc.Iterable) and not isinstance(x, str):
             return x
         return tuple(repeat(x, n))
     return parse
 
-
+"""Functions that parse input arguments to convert them into 1-tuple, 2-tuple, 3-tuple, 4-tuple and et cetera"""
 to_1tuple = _ntuple(1)
 to_2tuple = _ntuple(2)
 to_3tuple = _ntuple(3)
@@ -50,6 +51,7 @@ to_4tuple = _ntuple(4)
 to_ntuple = _ntuple
 
 def _trunc_normal_(tensor, mean, std, a, b):
+    """Helper function for truncated normal intialization of tensors"""
     # Cut & paste from PyTorch official master until it's in a few official releases - RW
     # Method based on https://people.sc.fsu.edu/~jburkardt/presentations/truncated_normal.pdf
     def norm_cdf(x):
@@ -111,7 +113,7 @@ def trunc_normal_(tensor, mean=0., std=1., a=-2., b=2.):
         return _trunc_normal_(tensor, mean, std, a, b)
 
 class DropPath(nn.Module):
-    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks).
+    """Drop paths (Stochastic Depth) per sample  (when applied in main path of residual blocks) during training.
     """
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
@@ -124,6 +126,7 @@ class DropPath(nn.Module):
         return 'p={}'.format(self.drop_prob)
 
 class Mlp(nn.Module):
+    """Multi-Layer Perceptrion (MLP) module"""
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
         out_features = out_features or in_features
@@ -141,6 +144,7 @@ class Mlp(nn.Module):
         return x
 
 class Attention(nn.Module):
+    "Self attention module"
     def __init__(
             self, dim, num_heads=8, qkv_bias=False, qk_scale=None, attn_drop=0.,
             proj_drop=0., attn_head_dim=None,):
@@ -180,6 +184,7 @@ class Attention(nn.Module):
         return x
 
 class Block(nn.Module):
+    """Residual block consisting of attention and MLP layers"""
 
     def __init__(self, dim, num_heads, mlp_ratio=4., qkv_bias=False, qk_scale=None, 
                  drop=0., attn_drop=0., drop_path=0., act_layer=nn.GELU, 
@@ -206,8 +211,7 @@ class Block(nn.Module):
 
 
 class PatchEmbed(nn.Module):
-    """ Image to Patch Embedding
-    """
+    """Module for converting image patches into embeddings"""
     def __init__(self, img_size=224, patch_size=16, in_chans=3, embed_dim=768, ratio=1):
         super().__init__()
         img_size = to_2tuple(img_size)
@@ -263,6 +267,10 @@ class HybridEmbed(nn.Module):
 
 
 class ViT(nn.Module):
+    """
+    Main path that defines the Vision Transformer model. It consists of a patch embedding layer, a series of blocks, 
+    and a linear projection layer
+    """
     def __init__(self,
                  img_size=224, patch_size=16, in_chans=3, num_classes=80, embed_dim=768, depth=12,
                  num_heads=12, mlp_ratio=4., qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
@@ -272,7 +280,6 @@ class ViT(nn.Module):
                  ):
         super(ViT, self).__init__()
         # Protect mutable default arguments
-        
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         self.num_classes = num_classes
         self.num_features = self.embed_dim = embed_dim  # num_features for consistency with other models
