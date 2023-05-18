@@ -25,5 +25,9 @@ class BodyPart:
         return np.sqrt(np.square(bodypart1.x - bodypart2.x) + np.square(bodypart1.y - bodypart2.y))
         
         
-    
-    
+# if __name__ == '__main__':
+    # #Testing out BodyPart class and attributes 
+    # array = np.load('/home/cgusti/ViTPose_pytorch/data/result/numerical/downward_dog_7_result_array.npy')
+    # print(array)
+    # print(array.shape)
+    # body_part = BodyPart(array)

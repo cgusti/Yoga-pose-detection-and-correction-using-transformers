@@ -20,7 +20,7 @@ __all__ = ['inference']
             
             
 @torch.no_grad() #disabling gradient calculation (typically used in situations where the model parameters are fixed and there is no need to compute gradients, such as during inference)
-def inference(img_path: Path, img_size: tuple[int, int],
+def inference(img_path: Path, output_path: Path, img_size: tuple[int, int],
               model_cfg: dict, ckpt_path: Path, device: torch.device, save_result: bool=True) -> np.ndarray:
     '''
     Outputs: 
@@ -53,8 +53,6 @@ def inference(img_path: Path, img_size: tuple[int, int],
     # Feed to model
     tic = time()
     heatmaps = vit_pose(img_tensor).detach().cpu().numpy() # N, 17, h/4, w/4
-    print('printing output of model')
-    print(heatmaps)
     elapsed_time = time()-tic
     print(f">>> Output size: {heatmaps.shape} ---> {elapsed_time:.4f} sec. elapsed [{elapsed_time**-1: .1f} fps]\n")    
     
@@ -62,8 +60,6 @@ def inference(img_path: Path, img_size: tuple[int, int],
     # points = heatmap2coords(heatmaps=heatmaps, original_resolution=(org_h, org_w))
     points, prob = keypoints_from_heatmaps(heatmaps=heatmaps, center=np.array([[org_w//2, org_h//2]]), scale=np.array([[org_w, org_h]]),
                                            unbiased=True, use_udp=True)
-    print(f'printing points: {points}')
-    print(f'printing prob: {prob}')
     points = np.concatenate([points[:, :, ::-1], prob], axis=2) #concatenate points with probabilities (1, num_keypoints, heatmap_size)
     print(f'printing final points: {points}')
     
@@ -75,9 +71,19 @@ def inference(img_path: Path, img_size: tuple[int, int],
             img = draw_points_and_skeleton(img.copy(), point, joints_dict()['coco']['skeleton'], person_index=pid,
                                            points_color_palette='gist_rainbow', skeleton_color_palette='jet',
                                            points_palette_samples=10, confidence_threshold=0.4)
-            save_name = img_path.replace(".jpg", "_result.jpg")
-            cv2.imwrite(save_name, img)
-    
+            head_tail = osp.split(img_path) 
+            img_name = head_tail[1]
+            save_name_visualization = img_name.replace(".jpg", "_result.jpg")
+            save_name_numpy = img_name.replace(".jpg", "_result_array.npy")
+            # output_path_visualization = f'./data/result/visualization/{save_name_visualization}'
+            output_path_visualization = f'{output_path}/visualization/{save_name_visualization}'
+            # output_path_numpy = f'./data/result/numerical/{save_name_numpy}'
+            output_path_numpy = f'{output_path}/numerical/{save_name_numpy}'
+            # cv2.imwrite(save_name, img)
+            cv2.imwrite(output_path_visualization, img)
+            print(f'output path for visualization: {output_path_visualization}')
+            print(f'output path for numpy: {output_path_numpy}')
+    np.save(output_path_numpy, points)
     return points
     
 
